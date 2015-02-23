@@ -276,7 +276,7 @@ void Display(void)
 };
 
 /* MAIN */
-int main(int argc, char* argv[])
+int main4(int argc, char* argv[])
 {
 	//step 1. initialize GLUT
 	glutInit(&argc, argv);
@@ -303,4 +303,5 @@ int main(int argc, char* argv[])
 
 	//step 4. enter the event processing loop
 	glutMainLoop();
+	return 0;
 }
