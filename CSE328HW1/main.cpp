@@ -33,11 +33,12 @@ struct Vertex {
 
 void drawMidPointAlgo(Vertex a, Vertex b) {
 	float x0 = a.x, y0 = a.y, x1 = b.x, y1 = b.y;
-	float dx, dy, incE, incNE, x, y, d, z;
+	float dx, dy, incE, incNE, x, y, d, z, increment;
 	float slope = (y1 - y0) / (x1 - x0);
 	printf("Slope : %.2f\n", slope);
 	glBegin(GL_POINTS);
 	glColor3f(0.8, 0.5, 0.2);
+	increment = 0.005;
 	if (x1 < x0) {
 		float tempx = x0;
 		float tempy = y0;
@@ -47,21 +48,33 @@ void drawMidPointAlgo(Vertex a, Vertex b) {
 		y1 = tempy;
 	}
 
-
-	if (slope >= 0 && slope<1) {
-		dx = x1 - x0;
-		dy = y1 - y0;
-		d = (2 * dy) - dx;
-		incE = 2 * dy;
-		incNE = 2 * (dy - dx);
-		y = y0;
-		x = x0;
-		z = x1;
+	if (slope <= 1 && slope >= -1) {
+		if (slope >= 0) {
+			dx = x1 - x0;
+			dy = y1 - y0;
+			d = (2 * dy) - dx;
+			incE = 2 * dy;
+			incNE = 2 * (dy - dx);
+			y = y0;
+			x = x0;
+			z = x1;
+		}
+		else {
+			dx = x1 - x0;
+			dy = y0 - y1;
+			d = (2 * dy) - dx;
+			incE = 2 * dy;
+			incNE = 2 * (dy - dx);
+			y = y0;
+			x = x0;
+			z = x1;
+			increment *= -1;
+		}
 		for (; x < z; x += 0.005) {
 			glVertex2f(x, y);
 			if (d>0) {
 				d += incNE;
-				y += 0.005;
+				y += increment;
 			}
 
 			else {
@@ -69,7 +82,8 @@ void drawMidPointAlgo(Vertex a, Vertex b) {
 			}
 		}
 	}
-	else if (slope >= 1) {
+
+	else {
 		float tempx = x0;
 		float tempy = x1;
 		x0 = y0;
@@ -77,68 +91,41 @@ void drawMidPointAlgo(Vertex a, Vertex b) {
 		y0 = tempx;
 		y1 = tempy;
 
-		dx = x1 - x0;
-		dy = y1 - y0;
-		d = (2 * dy) - dx;
-		incE = 2 * dy;
-		incNE = 2 * (dy - dx);
-		y = y0;
-		x = x0;
-		z = x1;
+		if (slope>0) {
+			
+			dx = x1 - x0;
+			dy = y1 - y0;
+			d = (2 * dy) - dx;
+			incE = 2 * dy;
+			incNE = 2 * (dy - dx);
+			y = y0;
+			x = x0;
+			z = x1;
+		}
+		else {
+			float tempx = x0;
+			float tempy = y0;
+			x0 = x1;
+			y0 = y1;
+			x1 = tempx;
+			y1 = tempy;
+
+
+			dx = x1 - x0;
+			dy = y0 - y1;
+			d = (2 * dy) - dx;
+			incE = 2 * dy;
+			incNE = 2 * (dy - dx);
+			y = y0;
+			x = x0;
+			z = x1;
+			increment *= -1;
+		}
 		for (; x < z; x += 0.005) {
 			glVertex2f(y, x);
 			if (d>0) {
 				d += incNE;
-				y += 0.005;
-			}
-
-			else {
-				d += incE;
-			}
-		}
-	}
-	if (slope <= 0 && slope>-1) {
-		dx = x1 - x0;
-		dy = y0 - y1;
-		d = (2 * dy) - dx;
-		incE = 2 * dy;
-		incNE = 2 * (dy - dx);
-		y = y0;
-		x = x0;
-		z = x1;
-		for (; x < z; x += 0.005) {
-			glVertex2f(x, y);
-			if (d>0) {
-				d += incNE;
-				y -= 0.005;
-			}
-
-			else {
-				d += incE;
-			}
-		}
-	}
-	if (slope <=-1) {
-		float tempx = x0;
-		float tempy = x1;
-		x0 = y1;
-		x1 = y0;
-		y0 = tempy;
-		y1 = tempx;
-
-		dx = x1 - x0;
-		dy = y0 - y1;
-		d = (2 * dy) - dx;
-		incE = 2 * dy;
-		incNE = 2 * (dy - dx);
-		y = y0;
-		x = x0;
-		z = x1;
-		for (; x < z; x += 0.005) {
-			glVertex2f(y,x);
-			if (d>0) {
-				d += incNE;
-				y -= 0.005;
+				y += increment;
 			}
 
 			else {
@@ -147,7 +134,6 @@ void drawMidPointAlgo(Vertex a, Vertex b) {
 		}
 	}
 
-	glEnd();
 }
 
 
@@ -172,7 +158,7 @@ struct Polygon {
 
 	void draw() {
 		for (int i = 1; i < vertices.size(); i++) {
-			drawMidPointAlgo(vertices[i], vertices[i-1]);
+			drawMidPointAlgo(vertices[i], vertices[i - 1]);
 		}
 		for (int i = 0; i < vertices.size(); i++) {
 			vertices[i].draw();
