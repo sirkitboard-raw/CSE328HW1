@@ -14,6 +14,13 @@ static int win_width(600), win_height(600);
 static float mouse_x(0.0), mouse_y(0.0);
 static int mouseMode(-1);
 
+float min(float a, float b) {
+	return((a > b) ? b : a);
+}
+float max(float a, float b) {
+	return((a < b) ? b : a);
+}
+
 struct Vertex {
 	float x;
 	float y;
@@ -37,8 +44,8 @@ void drawMidPointAlgo(Vertex a, Vertex b) {
 	float slope = (y1 - y0) / (x1 - x0);
 	printf("Slope : %.2f\n", slope);
 	glBegin(GL_POINTS);
-	glColor3f(0.8, 0.5, 0.2);
-	increment = 0.005;
+	glColor3f(0.8, 0.5, 0.3);
+	increment = 0.004;
 	if (x1 < x0) {
 		float tempx = x0;
 		float tempy = y0;
@@ -70,7 +77,7 @@ void drawMidPointAlgo(Vertex a, Vertex b) {
 			z = x1;
 			increment *= -1;
 		}
-		for (; x < z; x += 0.005) {
+		for (; x < z; x += 0.004) {
 			glVertex2f(x, y);
 			if (d>0) {
 				d += incNE;
@@ -121,7 +128,7 @@ void drawMidPointAlgo(Vertex a, Vertex b) {
 			z = x1;
 			increment *= -1;
 		}
-		for (; x < z; x += 0.005) {
+		for (; x < z; x += 0.004) {
 			glVertex2f(y, x);
 			if (d>0) {
 				d += incNE;
@@ -137,9 +144,44 @@ void drawMidPointAlgo(Vertex a, Vertex b) {
 }
 
 
+bool doLinesIntersect(float x0, float y0, float x1, float y1, float x2, float y2, float x3, float y3) {
+	
+	float A1 = y1 - y0;
+	float B1 = x0 - x1;
+	float C1 = (A1*x0) + (B1*y0);
+
+	float A2 = y3 - y2;
+	float B2 = x2 - x3;
+	float C2 = (A2*x2) + (B2*y2);
+	float det = (A1*B2 - A2*B1);
+
+	float x, y;
+
+	if (det<0.001 && det>-0.001) {
+		return false;
+	}
+	else {
+		x = (B2*C1 - B1*C2) / det;
+		y = (A1*C2 - A2*C1) / det;
+	}
+
+	if (min(x0, x1) < x && max(x0, x1) > x) {
+		if (min(y0, y1) < y && max(y0, y1) > y) {
+			return true;
+		}
+	}
+	if (min(x2, x3) < x && max(x2, x3) > x) {
+		if (min(y2, y3) < y && max(y2, y3) > y) {
+			return true;
+		}
+	}
+	return false;
+}
+
 struct Polygon {
 	std::vector<Vertex> vertices;
 	bool polyComplete;
+	bool isSimple;
 	Polygon() {
 		polyComplete = false;
 	};
@@ -160,10 +202,29 @@ struct Polygon {
 		for (int i = 1; i < vertices.size(); i++) {
 			drawMidPointAlgo(vertices[i], vertices[i - 1]);
 		}
+		if (polyComplete) {
+			drawMidPointAlgo(vertices[vertices.size() - 1], vertices[0]);
+		}
 		for (int i = 0; i < vertices.size(); i++) {
 			vertices[i].draw();
 		}
 	}
+
+	void checkSimple() {
+		int numIntersections = 0;
+		for (int i = 0; i < vertices.size(); i++) {
+			for (int j = 0; j < vertices.size(); j++) {
+				if (i == j);
+				else if (i == j - 1);
+				else if (i == j + 1);
+				else if (doLinesIntersect(vertices[i].x + 1, vertices[i].y + 1, vertices[(i + 1) % (int)vertices.size()].x + 1, vertices[(i + 1) % (int)vertices.size()].y + 1, vertices[j].x + 1, vertices[j].y + 1, vertices[(j + 1) % (int)vertices.size()].x + 1, vertices[(j + 1) % (int)vertices.size()].y + 1)) {
+					numIntersections++;
+				}
+			}
+		}
+		printf("%d\n", numIntersections);
+	}
+
 };
 
 Polygon temp;
@@ -176,8 +237,8 @@ void mousefunc(int button, int state, int x, int y) {
 		glutPostRedisplay();
 	}
 	if (button == GLUT_RIGHT_BUTTON && state == GLUT_DOWN) {
-		temp.vertices.push_back(temp.vertices[0]);
 		temp.polyComplete = true;
+		temp.checkSimple();
 		glutPostRedisplay();
 	}
 }
@@ -185,6 +246,7 @@ void mousefunc(int button, int state, int x, int y) {
 void keyboardfunc(unsigned char key, int x, int y) {
 	if (key == 'c') {
 		temp.vertices.clear();
+		temp.polyComplete = false;
 		glutPostRedisplay();
 	}
 }
