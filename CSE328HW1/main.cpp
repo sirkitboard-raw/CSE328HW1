@@ -47,6 +47,7 @@ void drawMidPointAlgo(Vertex a, Vertex b) {
 		y1 = tempy;
 	}
 
+
 	if (slope >= 0 && slope<1) {
 		dx = x1 - x0;
 		dy = y1 - y0;
@@ -68,15 +69,22 @@ void drawMidPointAlgo(Vertex a, Vertex b) {
 			}
 		}
 	}
-	else if (slope > 1) {
+	else if (slope >= 1) {
+		float tempx = x0;
+		float tempy = x1;
+		x0 = y0;
+		x1 = y1;
+		y0 = tempx;
+		y1 = tempy;
+
 		dx = x1 - x0;
 		dy = y1 - y0;
-		d = (2 * dx) - dy;
-		incE = 2 * dx;
-		incNE = 2 * (dx - dy);
-		y = x0;
-		x = y0;
-		z = y1;
+		d = (2 * dy) - dx;
+		incE = 2 * dy;
+		incNE = 2 * (dy - dx);
+		y = y0;
+		x = x0;
+		z = x1;
 		for (; x < z; x += 0.005) {
 			glVertex2f(y, x);
 			if (d>0) {
@@ -89,6 +97,56 @@ void drawMidPointAlgo(Vertex a, Vertex b) {
 			}
 		}
 	}
+	if (slope <= 0 && slope>-1) {
+		dx = x1 - x0;
+		dy = y0 - y1;
+		d = (2 * dy) - dx;
+		incE = 2 * dy;
+		incNE = 2 * (dy - dx);
+		y = y0;
+		x = x0;
+		z = x1;
+		for (; x < z; x += 0.005) {
+			glVertex2f(x, y);
+			if (d>0) {
+				d += incNE;
+				y -= 0.005;
+			}
+
+			else {
+				d += incE;
+			}
+		}
+	}
+	if (slope <=-1) {
+		float tempx = x0;
+		float tempy = x1;
+		x0 = y1;
+		x1 = y0;
+		y0 = tempy;
+		y1 = tempx;
+
+		dx = x1 - x0;
+		dy = y0 - y1;
+		d = (2 * dy) - dx;
+		incE = 2 * dy;
+		incNE = 2 * (dy - dx);
+		y = y0;
+		x = x0;
+		z = x1;
+		for (; x < z; x += 0.005) {
+			glVertex2f(y,x);
+			if (d>0) {
+				d += incNE;
+				y -= 0.005;
+			}
+
+			else {
+				d += incE;
+			}
+		}
+	}
+
 	glEnd();
 }
 
@@ -134,6 +192,7 @@ void mousefunc(int button, int state, int x, int y) {
 	if (button == GLUT_RIGHT_BUTTON && state == GLUT_DOWN) {
 		temp.vertices.push_back(temp.vertices[0]);
 		temp.polyComplete = true;
+		glutPostRedisplay();
 	}
 }
 
