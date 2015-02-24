@@ -1,4 +1,7 @@
+#pragma once
 #include "stdafx.h"
+#include "main.h"
+#include "lineFunctions.h"
 #include "vertex.h"
 
 struct Polygon {
