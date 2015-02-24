@@ -3,19 +3,8 @@
 *	SBUID : 109353920
 */
 
-#include "stdafx.h"
-#include "GL/glut.h"
-
-#define PI 3.14159265
-
-using std::cout;
-using std::cin;
-
-static int win(0);
-static int menu_id(0);
-static int win_width(600), win_height(600);
-static float mouse_x(0.0), mouse_y(0.0);
-static int mouseMode(-1);
+#include "main.h"
+#include "vertex.h"
 
 float min(float a, float b) {
 	return((a > b) ? b : a);
@@ -24,26 +13,11 @@ float max(float a, float b) {
 	return((a < b) ? b : a);
 }
 
-struct Vertex {
-	float x;
-	float y;
-
-	Vertex() :x(-1), y(-1){};
-	Vertex(float a, float b) :x(a), y(b){};
-	Vertex(double a, double b) :x(a), y(b){};
-
-	void draw() {
-		glVertex2f(x, y);
-		
-	}
-};
-
 void drawMidPointAlgo(Vertex a, Vertex b, float lineWidth)
 {
 	float x0 = a.x, y0 = a.y, x1 = b.x, y1 = b.y;
 	float dx, dy, incE, incNE, x, y, d, z, increment;
 	float slope = (y1 - y0) / (x1 - x0);
-	printf("Slope : %.2f\n", slope);
 
 	increment = lineWidth;
 	if (x1 < x0) {
@@ -214,112 +188,7 @@ void fillPolygon(std::vector<Vertex> vertices) {
 	}
 }
 
-struct Polygon {
-	std::vector<Vertex> vertices;
-	bool polyComplete;
-	bool isSimple;
-	Polygon() {
-		polyComplete = false;
-		isSimple = true;
-	};
 
-	int size() {
-		return vertices.size();
-	}
-
-	bool is_empty() {
-		return vertices.empty();
-	}
-
-	void clear() {
-		vertices.clear();
-		polyComplete = false;
-		isSimple = true;
-	}
-
-	void scale(float sf) {
-		for (int i = 0; i < vertices.size(); i++) {
-			vertices[i].x *= sf;
-			vertices[i].y *= sf;
-		}
-	}
-
-	void rotate(float ra) {
-		for (int i = 0; i < vertices.size(); i++) {
-			float tempx = vertices[i].x;
-			float tempy = vertices[i].y;
-			vertices[i].x = tempx*cos(ra) - tempy*sin(ra);
-			vertices[i].y = tempx*sin(ra) + tempy*cos(ra);
-		}
-	}
-
-	void horShear(float sf) {
-		for (int i = 0; i < vertices.size(); i++) {
-			vertices[i].x = vertices[i].x + sf*vertices[i].y;
-		}
-	}
-
-	void verShear(float sf) {
-		for (int i = 0; i < vertices.size(); i++) {
-			vertices[i].y = vertices[i].y + sf*vertices[i].x;
-		}
-	}
-
-	void reflect() {
-		for (int i = 0; i < vertices.size(); i++) {
-			float tempx = vertices[i].x;
-			float tempy = vertices[i].y;
-			vertices[i].x = tempy * -1;
-			vertices[i].y = tempx * -1;
-		}
-	}
-
-	void draw() {
-		glPointSize(4.0);
-		glBegin(GL_POINTS);
-		if (isSimple) glColor3f(0.1, 0.9, 0.1);
-		else glColor3f(0.9, 0.1, 0.1);
-		if (polyComplete && isSimple) {
-			fillPolygon(vertices);
-		}
-		glEnd();
-		glPointSize(2.0);
-		glBegin(GL_POINTS);
-		if (isSimple){
-			glColor3f(0.1, 0.1, 0.9);
-		}
-		if (polyComplete) {	
-			drawMidPointAlgo(vertices[vertices.size() - 1], vertices[0],0.0025);
-		}
-		for (int i = 1; i < vertices.size(); i++) {
-			drawMidPointAlgo(vertices[i], vertices[i - 1],0.0025);
-		}
-		glColor3f(0.2, 0.5, 0.8);
-		glEnd();
-		glPointSize(4.0);
-		glBegin(GL_POINTS);
-		for (int i = 0; i < vertices.size(); i++) {
-			vertices[i].draw();
-		}
-		glEnd();
-	}
-
-	void checkSimple() {
-		for (int i = 0; i < vertices.size(); i++) {
-			for (int j = 0; j < vertices.size(); j++) {
-				if (i == j);
-				else if (i == j - 1);
-				else if (i == j + 1);
-				else if (doLinesIntersect(vertices[i].x + 1, vertices[i].y + 1, vertices[(i + 1) % (int)vertices.size()].x + 1, vertices[(i + 1) % (int)vertices.size()].y + 1, vertices[j].x + 1, vertices[j].y + 1, vertices[(j + 1) % (int)vertices.size()].x + 1, vertices[(j + 1) % (int)vertices.size()].y + 1)) {
-					isSimple = false;
-					break;
-				}
-			}
-		}
-		cout << isSimple;
-	}
-
-};
 
 Polygon temp;
 std::vector<Polygon> polyList;

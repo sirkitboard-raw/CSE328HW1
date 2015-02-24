@@ -14,6 +14,7 @@
 #include <vector>
 #include <algorithm>
 #include <math.h>
+#include "GL/glut.h"
 
 
 
