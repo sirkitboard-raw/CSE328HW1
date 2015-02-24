@@ -18,3 +18,47 @@ void fillPolygon(std::vector<Vertex> vertices) {
 		intercepts.clear();
 	}
 }
+
+
+void scale(int sf) {
+	float sfactor = sf / 100.0;
+	temp.scale(sfactor);
+	for (int i = 0; i < polyList.size(); i++) {
+		polyList[i].scale(sfactor);
+	}
+	glutPostRedisplay();
+}
+
+void rotate(int ra) {
+	float rads = ra*PI / 180.0;
+	temp.rotate(rads);
+	for (int i = 0; i < polyList.size(); i++) {
+		polyList[i].rotate(rads);
+	}
+	glutPostRedisplay();
+}
+
+void reflect() {
+	temp.reflect();
+	for (int i = 0; i < polyList.size();i++) {
+		polyList[i].reflect();
+	}
+	glutPostRedisplay();
+}
+
+void shear(int sf, char type) {
+	float sfactor = sf / 100.0;
+	if (type == 'h') {
+		temp.horShear(sfactor);
+		for (int i = 0; i < polyList.size(); i++) {
+			polyList[i].horShear(sfactor);
+		}
+	}
+	else if (type == 'v') {
+		temp.verShear(sfactor);
+		for (int i = 0; i < polyList.size(); i++) {
+			polyList[i].verShear(sfactor);
+		}
+	}
+	glutPostRedisplay();
+}

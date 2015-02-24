@@ -5,6 +5,9 @@
 #include "vertex.h"
 #include "polygonFunctions.h"
 
+using std::cout;
+using std::cin;
+
 struct Polygon {
 	std::vector<Vertex> vertices;
 	bool polyComplete;
@@ -110,3 +113,4 @@ struct Polygon {
 		cout << isSimple;
 	}
 };
+
