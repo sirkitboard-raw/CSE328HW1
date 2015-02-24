@@ -4,9 +4,9 @@
 */
 
 #include "stdafx.h"
-#include "vector"
 #include "GL/glut.h"
-#include <algorithm>
+
+#define PI 3.14159265
 
 using std::cout;
 using std::cin;
@@ -244,6 +244,36 @@ struct Polygon {
 		}
 	}
 
+	void rotate(float ra) {
+		for (int i = 0; i < vertices.size(); i++) {
+			float tempx = vertices[i].x;
+			float tempy = vertices[i].y;
+			vertices[i].x = tempx*cos(ra) - tempy*sin(ra);
+			vertices[i].y = tempx*sin(ra) + tempy*cos(ra);
+		}
+	}
+
+	void horShear(float sf) {
+		for (int i = 0; i < vertices.size(); i++) {
+			vertices[i].x = vertices[i].x + sf*vertices[i].y;
+		}
+	}
+
+	void verShear(float sf) {
+		for (int i = 0; i < vertices.size(); i++) {
+			vertices[i].y = vertices[i].y + sf*vertices[i].x;
+		}
+	}
+
+	void reflect() {
+		for (int i = 0; i < vertices.size(); i++) {
+			float tempx = vertices[i].x;
+			float tempy = vertices[i].y;
+			vertices[i].x = tempy * -1;
+			vertices[i].y = tempx * -1;
+		}
+	}
+
 	void draw() {
 		glPointSize(4.0);
 		glBegin(GL_POINTS);
@@ -322,6 +352,40 @@ void scale(int sf) {
 	glutPostRedisplay();
 }
 
+void rotate(int ra) {
+	float rads = ra*PI / 180.0;
+	temp.rotate(rads);
+	for (int i = 0; i < polyList.size(); i++) {
+		polyList[i].rotate(rads);
+	}
+	glutPostRedisplay();
+}
+
+void reflect() {
+	temp.reflect();
+	for (int i = 0; i < polyList.size();i++) {
+		polyList[i].reflect();
+	}
+	glutPostRedisplay();
+}
+
+void shear(int sf, char type) {
+	float sfactor = sf / 100.0;
+	if (type == 'h') {
+		temp.horShear(sfactor);
+		for (int i = 0; i < polyList.size(); i++) {
+			polyList[i].horShear(sfactor);
+		}
+	}
+	else if (type == 'v') {
+		temp.verShear(sfactor);
+		for (int i = 0; i < polyList.size(); i++) {
+			polyList[i].verShear(sfactor);
+		}
+	}
+	glutPostRedisplay();
+}
+
 void keyboardfunc(unsigned char key, int x, int y) {
 	if (key == 'c') {
 		temp.vertices.clear();
@@ -329,13 +393,31 @@ void keyboardfunc(unsigned char key, int x, int y) {
 		glutPostRedisplay();
 	}
 	if (key == 'r') {
-		//rotate
+		int rotateAngle;
+		cout << "Enter rotation angle in degrees : ";
+		cin >> rotateAngle;
+		rotate(rotateAngle);
 	}
 	else if (key == 's') {
 		int scaleFactor;
 		cout << "Enter scale factor in percentage : ";
 		cin >> scaleFactor;
 		scale(scaleFactor);
+	}
+	else if (key == 'e') {
+		reflect();
+	}
+	else if (key == 'h') {
+		int shearFactor;
+		cout << "Enter the horizontal shear factor : ";
+		cin >> shearFactor;
+		shear(shearFactor,'h');
+	}
+	else if (key == 'v') {
+		int shearFactor;
+		cout << "Enter the vertical shear factor : ";
+		cin >> shearFactor;
+		shear(shearFactor, 'v');
 	}
 }
 
