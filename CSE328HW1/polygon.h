@@ -3,6 +3,7 @@
 #include "main.h"
 #include "lineFunctions.h"
 #include "vertex.h"
+#include "polygonFunctions.h"
 
 struct Polygon {
 	std::vector<Vertex> vertices;
@@ -108,5 +109,4 @@ struct Polygon {
 		}
 		cout << isSimple;
 	}
-
 };
