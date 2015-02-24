@@ -6,7 +6,9 @@
 #include "stdafx.h"
 #include "vector"
 #include "GL/glut.h"
+#include <algorithm>
 
+using std::cout;
 
 static int win(0);
 static int menu_id(0);
@@ -30,22 +32,19 @@ struct Vertex {
 	Vertex(double a, double b) :x(a), y(b){};
 
 	void draw() {
-		glColor3f(0.2, 0.5, 0.8);
-		glPointSize(4.0);
-		glBegin(GL_POINTS);
 		glVertex2f(x, y);
-		glEnd();
+		
 	}
 };
 
-void drawMidPointAlgo(Vertex a, Vertex b) {
+void drawMidPointAlgo(Vertex a, Vertex b)
+{
 	float x0 = a.x, y0 = a.y, x1 = b.x, y1 = b.y;
 	float dx, dy, incE, incNE, x, y, d, z, increment;
 	float slope = (y1 - y0) / (x1 - x0);
 	printf("Slope : %.2f\n", slope);
-	glBegin(GL_POINTS);
-	glColor3f(0.8, 0.5, 0.3);
-	increment = 0.004;
+
+	increment = 0.0025;
 	if (x1 < x0) {
 		float tempx = x0;
 		float tempy = y0;
@@ -77,7 +76,7 @@ void drawMidPointAlgo(Vertex a, Vertex b) {
 			z = x1;
 			increment *= -1;
 		}
-		for (; x < z; x += 0.004) {
+		for (; x < z; x += 0.0025) {
 			glVertex2f(x, y);
 			if (d>0) {
 				d += incNE;
@@ -99,7 +98,7 @@ void drawMidPointAlgo(Vertex a, Vertex b) {
 		y1 = tempy;
 
 		if (slope>0) {
-			
+
 			dx = x1 - x0;
 			dy = y1 - y0;
 			d = (2 * dy) - dx;
@@ -128,7 +127,7 @@ void drawMidPointAlgo(Vertex a, Vertex b) {
 			z = x1;
 			increment *= -1;
 		}
-		for (; x < z; x += 0.004) {
+		for (; x < z; x += 0.0025) {
 			glVertex2f(y, x);
 			if (d>0) {
 				d += incNE;
@@ -143,6 +142,22 @@ void drawMidPointAlgo(Vertex a, Vertex b) {
 
 }
 
+float getXIntercept(float x0, float y0, float x1, float y1, float x2, float y2, float x3, float y3) {
+
+	float A1 = y1 - y0;
+	float B1 = x0 - x1;
+	float C1 = (A1*x0) + (B1*y0);
+
+	float A2 = y3 - y2;
+	float B2 = x2 - x3;
+	float C2 = (A2*x2) + (B2*y2);
+	float det = (A1*B2 - A2*B1);
+
+	float x, y;
+	x = (B2*C1 - B1*C2) / det;
+	return x;
+	
+}
 
 bool doLinesIntersect(float x0, float y0, float x1, float y1, float x2, float y2, float x3, float y3) {
 	
@@ -165,17 +180,37 @@ bool doLinesIntersect(float x0, float y0, float x1, float y1, float x2, float y2
 		y = (A1*C2 - A2*C1) / det;
 	}
 
+	int flag = 0;
+
 	if (min(x0, x1) < x && max(x0, x1) > x) {
 		if (min(y0, y1) < y && max(y0, y1) > y) {
-			return true;
+			flag++;
 		}
 	}
 	if (min(x2, x3) < x && max(x2, x3) > x) {
 		if (min(y2, y3) < y && max(y2, y3) > y) {
-			return true;
+			flag++;
 		}
 	}
-	return false;
+	return (flag==2);
+}
+
+void fillPolygon(std::vector<Vertex> vertices) {
+	std::vector<float> intercepts;
+	for (float i = 1; i > -1; i -= 0.0025) {
+		for (int j = 0; j < vertices.size(); j++) {
+			if (i <(max(vertices[j].y, vertices[(j + 1) % vertices.size()].y))) {
+				if (i >(min(vertices[j].y, vertices[(j + 1) % vertices.size()].y))) {
+					intercepts.push_back(getXIntercept(-1.0, i, 1.0, i, vertices[j].x, vertices[j].y, vertices[(j + 1) % vertices.size()].x, vertices[(j + 1) % vertices.size()].y));
+				}
+			}
+		}
+		std::sort(intercepts.begin(), intercepts.end());
+		for (int j = 0; j < intercepts.size(); j += 2) {
+			drawMidPointAlgo(Vertex(intercepts[j], i), Vertex(intercepts[j + 1], i));
+		}
+		intercepts.clear();
+	}
 }
 
 struct Polygon {
@@ -184,6 +219,7 @@ struct Polygon {
 	bool isSimple;
 	Polygon() {
 		polyComplete = false;
+		isSimple = true;
 	};
 
 	int size() {
@@ -196,33 +232,49 @@ struct Polygon {
 
 	void clear() {
 		vertices.clear();
+		polyComplete = false;
+		isSimple = true;
 	}
 
 	void draw() {
-		for (int i = 1; i < vertices.size(); i++) {
-			drawMidPointAlgo(vertices[i], vertices[i - 1]);
+		glPointSize(2.0);
+		glBegin(GL_POINTS);
+		if (isSimple) glColor3f(0.1, 0.9, 0.1);
+		else glColor3f(0.9, 0.1, 0.1);
+		glPointSize(2.0);
+		if (polyComplete && isSimple) {
+			fillPolygon(vertices);
 		}
 		if (polyComplete) {
 			drawMidPointAlgo(vertices[vertices.size() - 1], vertices[0]);
 		}
+		for (int i = 1; i < vertices.size(); i++) {
+			drawMidPointAlgo(vertices[i], vertices[i - 1]);
+		}
+		glColor3f(0.2, 0.5, 0.8);
+		glEnd();
+		glPointSize(4.0);
+		glBegin(GL_POINTS);
 		for (int i = 0; i < vertices.size(); i++) {
 			vertices[i].draw();
 		}
+		glEnd();
 	}
 
 	void checkSimple() {
-		int numIntersections = 0;
+
 		for (int i = 0; i < vertices.size(); i++) {
 			for (int j = 0; j < vertices.size(); j++) {
 				if (i == j);
 				else if (i == j - 1);
 				else if (i == j + 1);
 				else if (doLinesIntersect(vertices[i].x + 1, vertices[i].y + 1, vertices[(i + 1) % (int)vertices.size()].x + 1, vertices[(i + 1) % (int)vertices.size()].y + 1, vertices[j].x + 1, vertices[j].y + 1, vertices[(j + 1) % (int)vertices.size()].x + 1, vertices[(j + 1) % (int)vertices.size()].y + 1)) {
-					numIntersections++;
+					isSimple = false;
+					break;
 				}
 			}
 		}
-		printf("%d\n", numIntersections);
+		cout << isSimple;
 	}
 
 };
@@ -275,7 +327,7 @@ void windowSizeResize(int w, int h) {
 
 int main(int argc, char** argv) {
 	glutInit(&argc, argv);
-	glutInitDisplayMode(GLUT_RGBA | GLUT_SINGLE);
+	glutInitDisplayMode(GLUT_RGBA | GLUT_SINGLE | GLUT_MULTISAMPLE);
 	glutInitWindowSize(win_width, win_height);
 	glutInitWindowPosition(100, 100);
 

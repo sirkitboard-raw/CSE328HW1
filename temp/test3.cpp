@@ -164,7 +164,7 @@ void Menu(int value) //Menu function;
 }
 
 /* menu creation */
-void CreateMenu(void)
+/*void CreateMenu(void)
 {
 	menu_id = glutCreateMenu(Menu);
 	//create an entry
@@ -177,7 +177,7 @@ void CreateMenu(void)
 
 	//let the menu respnd on the right button
 	glutAttachMenu(GLUT_MIDDLE_BUTTON);
-}
+}*/
 
 
 // Call-back function glutMouseFunc();
@@ -299,7 +299,7 @@ int main4(int argc, char* argv[])
 	glutMouseFunc(MouseMotion);
 	glutReshapeFunc(WindowSizeReShape);
 
-	CreateMenu();
+//	CreateMenu();
 
 	//step 4. enter the event processing loop
 	glutMainLoop();
