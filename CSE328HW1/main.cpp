@@ -9,6 +9,7 @@
 #include <algorithm>
 
 using std::cout;
+using std::cin;
 
 static int win(0);
 static int menu_id(0);
@@ -37,14 +38,14 @@ struct Vertex {
 	}
 };
 
-void drawMidPointAlgo(Vertex a, Vertex b)
+void drawMidPointAlgo(Vertex a, Vertex b, float lineWidth)
 {
 	float x0 = a.x, y0 = a.y, x1 = b.x, y1 = b.y;
 	float dx, dy, incE, incNE, x, y, d, z, increment;
 	float slope = (y1 - y0) / (x1 - x0);
 	printf("Slope : %.2f\n", slope);
 
-	increment = 0.0025;
+	increment = lineWidth;
 	if (x1 < x0) {
 		float tempx = x0;
 		float tempy = y0;
@@ -76,7 +77,7 @@ void drawMidPointAlgo(Vertex a, Vertex b)
 			z = x1;
 			increment *= -1;
 		}
-		for (; x < z; x += 0.0025) {
+		for (; x < z; x += lineWidth) {
 			glVertex2f(x, y);
 			if (d>0) {
 				d += incNE;
@@ -127,7 +128,7 @@ void drawMidPointAlgo(Vertex a, Vertex b)
 			z = x1;
 			increment *= -1;
 		}
-		for (; x < z; x += 0.0025) {
+		for (; x < z; x += lineWidth) {
 			glVertex2f(y, x);
 			if (d>0) {
 				d += incNE;
@@ -207,7 +208,7 @@ void fillPolygon(std::vector<Vertex> vertices) {
 		}
 		std::sort(intercepts.begin(), intercepts.end());
 		for (int j = 0; j < intercepts.size(); j += 2) {
-			drawMidPointAlgo(Vertex(intercepts[j], i), Vertex(intercepts[j + 1], i));
+			drawMidPointAlgo(Vertex((intercepts[j]+0.005f), i+0.005f), Vertex(intercepts[j + 1]-0.005f, i-0.005f),0.005);
 		}
 		intercepts.clear();
 	}
@@ -236,20 +237,32 @@ struct Polygon {
 		isSimple = true;
 	}
 
+	void scale(float sf) {
+		for (int i = 0; i < vertices.size(); i++) {
+			vertices[i].x *= sf;
+			vertices[i].y *= sf;
+		}
+	}
+
 	void draw() {
-		glPointSize(2.0);
+		glPointSize(4.0);
 		glBegin(GL_POINTS);
 		if (isSimple) glColor3f(0.1, 0.9, 0.1);
 		else glColor3f(0.9, 0.1, 0.1);
-		glPointSize(2.0);
 		if (polyComplete && isSimple) {
 			fillPolygon(vertices);
 		}
-		if (polyComplete) {
-			drawMidPointAlgo(vertices[vertices.size() - 1], vertices[0]);
+		glEnd();
+		glPointSize(2.0);
+		glBegin(GL_POINTS);
+		if (isSimple){
+			glColor3f(0.1, 0.1, 0.9);
+		}
+		if (polyComplete) {	
+			drawMidPointAlgo(vertices[vertices.size() - 1], vertices[0],0.0025);
 		}
 		for (int i = 1; i < vertices.size(); i++) {
-			drawMidPointAlgo(vertices[i], vertices[i - 1]);
+			drawMidPointAlgo(vertices[i], vertices[i - 1],0.0025);
 		}
 		glColor3f(0.2, 0.5, 0.8);
 		glEnd();
@@ -262,7 +275,6 @@ struct Polygon {
 	}
 
 	void checkSimple() {
-
 		for (int i = 0; i < vertices.size(); i++) {
 			for (int j = 0; j < vertices.size(); j++) {
 				if (i == j);
@@ -280,19 +292,34 @@ struct Polygon {
 };
 
 Polygon temp;
+std::vector<Polygon> polyList;
 
 void mousefunc(int button, int state, int x, int y) {
 	mouse_x = (x*2.0) / win_width - 1.0;
 	mouse_y = 1.0 - (y*2.0) / win_height;
 	if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
 		temp.vertices.push_back(Vertex(mouse_x, mouse_y));
+		if (temp.polyComplete) {
+			temp.checkSimple();
+		}
 		glutPostRedisplay();
 	}
 	if (button == GLUT_RIGHT_BUTTON && state == GLUT_DOWN) {
 		temp.polyComplete = true;
 		temp.checkSimple();
+		polyList.push_back(temp);
+		temp.clear();
 		glutPostRedisplay();
 	}
+}
+
+void scale(int sf) {
+	float sfactor = sf / 100.0;
+	temp.scale(sfactor);
+	for (int i = 0; i < polyList.size(); i++) {
+		polyList[i].scale(sfactor);
+	}
+	glutPostRedisplay();
 }
 
 void keyboardfunc(unsigned char key, int x, int y) {
@@ -300,6 +327,15 @@ void keyboardfunc(unsigned char key, int x, int y) {
 		temp.vertices.clear();
 		temp.polyComplete = false;
 		glutPostRedisplay();
+	}
+	if (key == 'r') {
+		//rotate
+	}
+	else if (key == 's') {
+		int scaleFactor;
+		cout << "Enter scale factor in percentage : ";
+		cin >> scaleFactor;
+		scale(scaleFactor);
 	}
 }
 
@@ -309,7 +345,9 @@ void display(){
 	glLoadIdentity();
 
 	temp.draw();
-
+	for (Polygon &a : polyList) {
+		a.draw();
+	}
 	glFlush();
 }
 
