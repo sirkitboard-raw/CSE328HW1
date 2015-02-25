@@ -13,7 +13,12 @@ Polygon temp;
 std::vector<Polygon> polyList;
 Vertex* selected;
 Polygon* selectedPoly, *poly1, *poly2;
-std::vector<Vertex> vertList1, vertList2;
+std::vector<Vertex*> vertList1, vertList2;
+
+static bool morphing = false;
+static int FPS = 16;
+std::vector<float> increments;
+static int animationCounter;
 
 
 void mousefunc(int button, int state, int x, int y) {
@@ -60,18 +65,18 @@ void mousefunc(int button, int state, int x, int y) {
 					if (polyList[j].vertices[i].clicked(mouse_x, mouse_y)) {
 						if (vertList1.empty()) {
 							poly1 = &polyList[j];
-							vertList1.push_back(polyList[j].vertices[i]);
+							vertList1.push_back(&polyList[j].vertices[i]);
 							polyList[j].vertices[i].clickable = false;
 							selected = &polyList[j].vertices[i];
 						}
 						else {
 							if (poly1 == &polyList[j]) {
-								vertList1.push_back(polyList[j].vertices[i]);
+								vertList1.push_back(&polyList[j].vertices[i]);
 								polyList[j].vertices[i].clickable = false;
 								selected = &polyList[j].vertices[i];
 							}
 							else if (poly2 == &polyList[j]){
-								vertList2.push_back(polyList[j].vertices[i]);
+								vertList2.push_back(&polyList[j].vertices[i]);
 								polyList[j].vertices[i].clickable = false;
 								selected = &polyList[j].vertices[i];
 							}
@@ -87,7 +92,7 @@ void mousefunc(int button, int state, int x, int y) {
 						if (!vertList1.empty() && vertList2.empty()) {
 							poly2 = &polyList[j];
 							if (poly2 != poly1 && (poly2->vertices.size() == poly1->vertices.size())) {
-								vertList2.push_back(polyList[j].vertices[i]);
+								vertList2.push_back(&polyList[j].vertices[i]);
 								polyList[j].vertices[i].clickable = false;
 								
 							}
@@ -99,7 +104,7 @@ void mousefunc(int button, int state, int x, int y) {
 						else {
 							if (vertList1.size() > vertList2.size()) {
 								if (poly2 == &polyList[j]) {
-									vertList2.push_back(polyList[j].vertices[i]);
+									vertList2.push_back(&polyList[j].vertices[i]);
 									polyList[j].vertices[i].clickable = false;
 								}
 								else {
@@ -109,7 +114,7 @@ void mousefunc(int button, int state, int x, int y) {
 							}
 							else if (vertList1.size() < vertList2.size()) {
 								if (poly1 == &polyList[j]) {
-									vertList1.push_back(polyList[j].vertices[i]);
+									vertList1.push_back(&polyList[j].vertices[i]);
 									polyList[j].vertices[i].clickable = false;
 								}
 								else {
@@ -134,6 +139,13 @@ void mouseMoveFunc(int x, int y) {
 		selected->y = mouse_y;
 		selectedPoly->checkSimple();
 		glutPostRedisplay();
+	}
+}
+
+void calculateIncrement() {
+	for (int i = 0; i < vertList1.size(); i++) {
+		float dist = vertList2[i]->y - vertList1[i]->y;
+		increments.push_back(dist / 48.0);
 	}
 }
 
@@ -186,7 +198,9 @@ void keyboardfunc(unsigned char key, int x, int y) {
 		}
 		else if (mouseMode == 3) {
 			if (vertList1.size() == poly1->vertices.size()) {
-				//morph
+				calculateIncrement();
+				animationCounter = 0;
+				morphing = true;
 			}
 			else {
 				cout << "Not enough nodes selected\n";
@@ -221,12 +235,33 @@ void display(){
 			glColor3f(0.8, 0.1, 0.8);
 			glBegin(GL_POINTS);
 			for (int i = 0; i < vertList1.size(); i++) {
-				drawMidPointAlgo(vertList1[i], vertList2[i], 0.01);
+				drawMidPointAlgo(*vertList1[i], *vertList2[i], 0.01);
 			}
 			glEnd();
 		}
 	}
 	glFlush();
+	glutSwapBuffers();
+}
+
+void timer(int v) {
+	if (morphing) {
+		if (animationCounter > 47) {
+			morphing = false;
+			mouseMode = 1;
+		}
+		else {
+			for (int i = 0; i < vertList1.size(); i++) {
+				float x = getXIntercept(-1.0, vertList1[i]->y + increments[i], 1.0, vertList1[i]->y + increments[i], vertList1[i]->x, vertList1[i]->y, vertList2[i]->x, vertList2[i]->y);
+				vertList1[i]->x = x;
+				vertList1[i]->y += increments[i];
+			}
+			animationCounter++;
+		}
+		poly1->checkSimple();
+		glutPostRedisplay();
+	}
+	glutTimerFunc(1000 / FPS, timer, v);
 }
 
 void windowSizeResize(int w, int h) {
@@ -243,7 +278,7 @@ void windowSizeResize(int w, int h) {
 
 int main(int argc, char** argv) {
 	glutInit(&argc, argv);
-	glutInitDisplayMode(GLUT_RGBA | GLUT_SINGLE | GLUT_MULTISAMPLE);
+	glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE);
 	glutInitWindowSize(win_width, win_height);
 	glutInitWindowPosition(100, 100);
 
@@ -255,6 +290,7 @@ int main(int argc, char** argv) {
 	glutMouseFunc(mousefunc);
 	glutMotionFunc(mouseMoveFunc);
 	glutKeyboardFunc(keyboardfunc);
+	glutTimerFunc(100, timer, 0);
 	glDisable(GL_DEPTH_TEST);
 
 	glutDisplayFunc(display);

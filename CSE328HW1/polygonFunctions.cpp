@@ -3,7 +3,7 @@
 
 void fillPolygon(std::vector<Vertex> vertices) {
 	std::vector<float> intercepts;
-	for (float i = 1; i > -1; i -= 0.0025) {
+	for (float i = 1; i > -1; i -= 0.005) {
 		for (int j = 0; j < vertices.size(); j++) {
 			if (i <(max(vertices[j].y, vertices[(j + 1) % vertices.size()].y))) {
 				if (i >(min(vertices[j].y, vertices[(j + 1) % vertices.size()].y))) {
@@ -13,7 +13,7 @@ void fillPolygon(std::vector<Vertex> vertices) {
 		}
 		std::sort(intercepts.begin(), intercepts.end());
 		for (int j = 0; j < intercepts.size(); j += 2) {
-			drawMidPointAlgo(Vertex((intercepts[j] + 0.005f), i + 0.005f), Vertex(intercepts[j + 1] - 0.005f, i - 0.005f), 0.005);
+			drawMidPointAlgo(Vertex((intercepts[j]), i), Vertex(intercepts[j + 1], i), 0.005);
 		}
 		intercepts.clear();
 	}
