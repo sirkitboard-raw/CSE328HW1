@@ -1,7 +1,6 @@
 #pragma once
 #include "stdafx.h"
 #include "main.h"
-#include "lineFunctions.h"
 #include "vertex.h"
 #include "polygonFunctions.h"
 
@@ -99,6 +98,7 @@ struct Polygon {
 	}
 
 	void checkSimple() {
+		isSimple = true;
 		for (int i = 0; i < vertices.size(); i++) {
 			for (int j = 0; j < vertices.size(); j++) {
 				if (i == j);

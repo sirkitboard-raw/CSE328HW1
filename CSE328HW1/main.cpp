@@ -11,22 +11,54 @@
 
 Polygon temp;
 std::vector<Polygon> polyList;
+Vertex* selected;
+Polygon* selectedPoly;
 
 void mousefunc(int button, int state, int x, int y) {
 	mouse_x = (x*2.0) / win_width - 1.0;
 	mouse_y = 1.0 - (y*2.0) / win_height;
-	if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
-		temp.vertices.push_back(Vertex(mouse_x, mouse_y));
-		if (temp.polyComplete) {
-			temp.checkSimple();
+	if (mouseMode == 1){
+		if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
+			temp.vertices.push_back(Vertex(mouse_x, mouse_y));
+			if (temp.polyComplete) {
+				temp.checkSimple();
+			}
+			glutPostRedisplay();
 		}
-		glutPostRedisplay();
+		if (button == GLUT_RIGHT_BUTTON && state == GLUT_DOWN) {
+			temp.polyComplete = true;
+			temp.checkSimple();
+			polyList.push_back(temp);
+			temp.clear();
+			glutPostRedisplay();
+		}
 	}
-	if (button == GLUT_RIGHT_BUTTON && state == GLUT_DOWN) {
-		temp.polyComplete = true;
-		temp.checkSimple();
-		polyList.push_back(temp);
-		temp.clear();
+	if (mouseMode == 2) {
+		if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
+			leftButtonState = 1;
+			for (int j = 0; j < polyList.size(); j++) {
+				for (int i = 0; i < polyList[j].vertices.size(); i++) {
+					if (polyList[j].vertices[i].clicked(mouse_x, mouse_y)) {
+						cout << "CLICKED!";
+						selected = &(polyList[j].vertices[i]);
+						selectedPoly = &polyList[j];
+					}
+				}
+			}
+		}
+		else if (button == GLUT_LEFT_BUTTON && state == GLUT_UP) {
+			leftButtonState = 0;
+		}
+	}
+}
+
+void mouseMoveFunc(int x, int y) {
+	if (leftButtonState == 1) {
+		float mouse_x = (x*2.0) / win_width - 1.0;
+		float mouse_y = 1.0 - (y*2.0) / win_height;
+		selected->x = mouse_x;
+		selected->y = mouse_y;
+		selectedPoly->checkSimple();
 		glutPostRedisplay();
 	}
 }
@@ -49,7 +81,7 @@ void keyboardfunc(unsigned char key, int x, int y) {
 		cin >> scaleFactor;
 		scale(scaleFactor);
 	}
-	else if (key == 'e') {
+	else if (key == 'f') {
 		reflect();
 	}
 	else if (key == 'h') {
@@ -64,6 +96,16 @@ void keyboardfunc(unsigned char key, int x, int y) {
 		cin >> shearFactor;
 		shear(shearFactor, 'v');
 	}
+	else if (key == 'e') {
+		temp.clear();
+		mouseMode = 2;
+		glutPostRedisplay();
+	}
+	else if (key == 'd') {
+		temp.clear();
+		mouseMode = 1;
+		glutPostRedisplay();
+	}
 }
 
 void display(){
@@ -74,6 +116,13 @@ void display(){
 	temp.draw();
 	for (int i = 0; i < polyList.size();i++) {
 		polyList[i].draw();
+	}
+	if (mouseMode == 2) {
+		for (int j = 0; j < polyList.size(); j++) {
+			for (int i = 0; i < polyList[j].vertices.size(); i++) {
+				polyList[j].vertices[i].drawHandle();
+			}
+		}
 	}
 	glFlush();
 }
@@ -102,6 +151,7 @@ int main(int argc, char** argv) {
 
 	glutSetCursor(GLUT_CURSOR_CROSSHAIR);
 	glutMouseFunc(mousefunc);
+	glutMotionFunc(mouseMoveFunc);
 	glutKeyboardFunc(keyboardfunc);
 	glDisable(GL_DEPTH_TEST);
 
