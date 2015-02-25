@@ -15,7 +15,5 @@ static float mouse_x(0.0), mouse_y(0.0);
 static int mouseMode(1);
 static int leftButtonState(0);
 
-extern Vertex* selected;
-
 extern Polygon temp;
 extern std::vector<Polygon> polyList;

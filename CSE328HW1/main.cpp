@@ -12,7 +12,9 @@
 Polygon temp;
 std::vector<Polygon> polyList;
 Vertex* selected;
-Polygon* selectedPoly;
+Polygon* selectedPoly, *poly1, *poly2;
+std::vector<Vertex> vertList1, vertList2;
+
 
 void mousefunc(int button, int state, int x, int y) {
 	mouse_x = (x*2.0) / win_width - 1.0;
@@ -48,6 +50,78 @@ void mousefunc(int button, int state, int x, int y) {
 		}
 		else if (button == GLUT_LEFT_BUTTON && state == GLUT_UP) {
 			leftButtonState = 0;
+		}
+	}
+
+	if (mouseMode == 3) {
+		if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
+			for (int j = 0; j < polyList.size(); j++) {
+				for (int i = 0; i < polyList[j].vertices.size(); i++) {
+					if (polyList[j].vertices[i].clicked(mouse_x, mouse_y)) {
+						if (vertList1.empty()) {
+							poly1 = &polyList[j];
+							vertList1.push_back(polyList[j].vertices[i]);
+							polyList[j].vertices[i].clickable = false;
+							selected = &polyList[j].vertices[i];
+						}
+						else {
+							if (poly1 == &polyList[j]) {
+								vertList1.push_back(polyList[j].vertices[i]);
+								polyList[j].vertices[i].clickable = false;
+								selected = &polyList[j].vertices[i];
+							}
+							else if (poly2 == &polyList[j]){
+								vertList2.push_back(polyList[j].vertices[i]);
+								polyList[j].vertices[i].clickable = false;
+								selected = &polyList[j].vertices[i];
+							}
+						}
+					}
+				}
+			}
+		}
+		else if (button == GLUT_LEFT_BUTTON && state == GLUT_UP) {
+			for (int j = 0; j < polyList.size(); j++) {
+				for (int i = 0; i < polyList[j].vertices.size(); i++) {
+					if (polyList[j].vertices[i].clicked(mouse_x, mouse_y)) {
+						if (!vertList1.empty() && vertList2.empty()) {
+							poly2 = &polyList[j];
+							if (poly2 != poly1 && (poly2->vertices.size() == poly1->vertices.size())) {
+								vertList2.push_back(polyList[j].vertices[i]);
+								polyList[j].vertices[i].clickable = false;
+								
+							}
+							else {
+								selected->clickable = true;
+								vertList1.clear();
+							}
+						}
+						else {
+							if (vertList1.size() > vertList2.size()) {
+								if (poly2 == &polyList[j]) {
+									vertList2.push_back(polyList[j].vertices[i]);
+									polyList[j].vertices[i].clickable = false;
+								}
+								else {
+									selected->clickable = true;
+									vertList2.pop_back();
+								}
+							}
+							else if (vertList1.size() < vertList2.size()) {
+								if (poly1 == &polyList[j]) {
+									vertList1.push_back(polyList[j].vertices[i]);
+									polyList[j].vertices[i].clickable = false;
+								}
+								else {
+									selected->clickable = true;
+									vertList2.pop_back();
+								}
+							}
+						}
+					}
+				}
+			}
+			glutPostRedisplay();
 		}
 	}
 }
@@ -106,6 +180,23 @@ void keyboardfunc(unsigned char key, int x, int y) {
 		mouseMode = 1;
 		glutPostRedisplay();
 	}
+	else if (key == 'm') {
+		if (polyList.size() <= 1) {
+			cout << "You need 2 or more polygons to morph\n";
+		}
+		else if (mouseMode == 3) {
+			if (vertList1.size() == poly1->vertices.size()) {
+				//morph
+			}
+			else {
+				cout << "Not enough nodes selected\n";
+			}
+		}
+		else {
+			mouseMode = 3;
+		}
+		glutPostRedisplay();
+	}
 }
 
 void display(){
@@ -117,11 +208,22 @@ void display(){
 	for (int i = 0; i < polyList.size();i++) {
 		polyList[i].draw();
 	}
-	if (mouseMode == 2) {
+	if (mouseMode >=2) {
 		for (int j = 0; j < polyList.size(); j++) {
 			for (int i = 0; i < polyList[j].vertices.size(); i++) {
 				polyList[j].vertices[i].drawHandle();
 			}
+		}
+	}
+	if (mouseMode == 3) {
+		if (vertList1.size() == vertList2.size()) {
+			glPointSize(2.0);
+			glColor3f(0.8, 0.1, 0.8);
+			glBegin(GL_POINTS);
+			for (int i = 0; i < vertList1.size(); i++) {
+				drawMidPointAlgo(vertList1[i], vertList2[i], 0.01);
+			}
+			glEnd();
 		}
 	}
 	glFlush();

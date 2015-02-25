@@ -4,6 +4,7 @@
 struct Vertex {
 	float x;
 	float y;
+	bool clickable = true;
 
 	Vertex() :x(-1), y(-1){};
 	Vertex(float a, float b) :x(a), y(b){};
@@ -27,7 +28,10 @@ struct Vertex {
 	}
 
 	bool clicked(float a, float b) {
-		if (getDistance(a, b)<0.2) {
+		if (clickable == false) {
+			return false;
+		}
+		if (getDistance(a, b) < 0.2) {
 			return true;
 		}
 		return false;
